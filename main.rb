@@ -21,8 +21,9 @@ end
 def start
   @sttyoption=`stty -g`
 end
-def stop
+def stop msg
   system "stty "+@sttyoption
+  p msg
   exit
 end
 
@@ -65,16 +66,17 @@ Thread.new{
 begin
   system "stty raw"
   master,slave=PTY.open
-  ws=STDOUT.winsize
-  master.winsize=ws
   ENV['TERM']='vt100'
   ENV['LANG']='ja_JP.UTF-8'
+  master.winsize=STDOUT.winsize
   rr,ww,pid = PTY::getpty("screen -x hoge -R",in:slave,out:master)
-  Signal.trap("SIGWINCH"){
-    height,width=ws=STDOUT.winsize
-    master.winsize=rr.winsize=ws
-    socket.send 'winch',{width:width,height:height}.to_json
+  winsize=->{
+      height,width=master.winsize=rr.winsize=STDOUT.winsize
+      socket.send 'winch',{width:width,height:height}.to_json
   }
+  winsize.call
+  Signal.trap("SIGWINCH"){winsize.call}
+  Signal.trap("SIGCHLD"){stop "broadcast end"}
   Thread.new{
     loop do
       master.write STDIN.getc
@@ -86,7 +88,6 @@ begin
   end
 rescue
 end
-
 stop "broadcast end"
 
 
