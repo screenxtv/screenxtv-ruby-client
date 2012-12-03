@@ -3,14 +3,18 @@ require 'pty'
 require 'io/console'
 require 'socket'
 require 'json'
+require 'yaml'
 def kvconnect(host,port)
   socket=TCPSocket.open host, port
+  @@mutex=Mutex.new
   def socket.send(key,value)
-    keylen=key.bytesize
-    vallen=value.bytesize
-    self.write keylen.chr+key
-    self.write (vallen>>8).chr+(vallen&0xff).chr
-    self.write value
+    @@mutex.synchronize{
+      keylen=key.bytesize
+      vallen=value.bytesize
+      self.write keylen.chr+key
+      self.write (vallen>>8).chr+(vallen&0xff).chr
+      self.write value
+    }
   end
   def socket.recv
     [self.readline.chop,JSON.parse("["+self.readline+"]")[0]]
@@ -22,35 +26,74 @@ def start
   @sttyoption=`stty -g`
 end
 def stop msg
+  height,width=STDOUT.winsize
+  print "\e[?1l\e[>\e[#{height};1H"
   system "stty "+@sttyoption
-  p msg
+  print msg+"\n"
   exit
 end
 
-################
-#definition end#
-################
 
+conf_scan=[
+  {key:"url",msg:"Create a new URL. If given \"foo\", your URL will be \"http://screenx.tv/foo\".",value:""},
+  {key:"screen",value:"screenxtv"},
+  {key:"color",msg:"Terminal Color [BLACK/white/green/novel]",value:"black"},
+  {key:"title",msg:"Title",value:"no title"},
+#  {key:"private",msg:"Would you like to make it private? [NO/yes]",value:"no"}
+]
+
+conf_file="screenxtv.yml"
+conf={}
+begin
+  conf=YAML.load_file conf_file
+rescue
+end
+
+conf_scan.each do |item|
+  key=item[:key]
+  msg=item[:msg]
+  value=item[:value]
+  if !conf[key] then
+    if msg then
+      print item[:msg]+"\n> "
+      s=STDIN.readline.chop
+      if s=="" then s=value end
+      conf[key]=s
+    else
+      conf[key]=value
+    end
+  end
+end
+conf['url'].gsub! /[^a-z^A-Z^0-9^_^#]/,""
+conf['color'].downcase!
+conf['private'].downcase!
+File.write conf_file,conf.to_yaml
 
 socket=kvconnect "screenx.tv",8000
 height,width=STDOUT.winsize
-initdata={width:width,height:height,slug:'a#b',info:{color:'black',title:'rubyclient-test'}}
+initdata={
+  width:width,height:height,slug:conf['url'],
+  info:{color:conf['color'],title:conf['title']}
+}
 socket.send('init',initdata.to_json)
-slug=''
+url=nil
 loop do
   key,value=socket.recv
-  print key+":"+value+"\n"
   if key=='error'
     p 'An error occured: '+value
     exit
   end
   if key=='slug'
-    slug=value
+    url=value
     break
   end
 end
-p 'your url is http://screenx.tv/'+slug.split("#")[0];
-print '> '
+
+conf['url']=url
+File.write conf_file,conf.to_yaml
+
+print "your url is http://screenx.tv/"+url.split("#")[0]+"\n\n";
+print "Press Enter to start broadcasting "
 STDIN.readline
 start
 Thread.new{
