@@ -11,10 +11,14 @@ def kvconnect(host,port)
     @@mutex.synchronize{
       keylen=key.bytesize
       vallen=value.bytesize
-      self.write keylen.chr+key
+      self.write keylen.chr
+      self.write key
       self.write (vallen>>8).chr+(vallen&0xff).chr
       self.write value
     }
+  end
+  def socket.lockhoge
+    sleep 1
   end
   def socket.recv
     [self.readline.chop,JSON.parse("["+self.readline+"]")[0]]
@@ -69,6 +73,8 @@ conf['color'].downcase!
 conf['private'].downcase!
 File.write conf_file,conf.to_yaml
 
+print "connecting...\n"
+
 socket=kvconnect "screenx.tv",8000
 height,width=STDOUT.winsize
 initdata={
@@ -80,7 +86,7 @@ url=nil
 loop do
   key,value=socket.recv
   if key=='error'
-    p 'An error occured: '+value
+    print 'An error occured: '+value
     exit
   end
   if key=='slug'
@@ -114,11 +120,11 @@ begin
   master.winsize=STDOUT.winsize
   rr,ww,pid = PTY::getpty("screen -x hoge -R",in:slave,out:master)
   winsize=->{
-      height,width=master.winsize=rr.winsize=STDOUT.winsize
-      socket.send 'winch',{width:width,height:height}.to_json
+    height,width=master.winsize=rr.winsize=STDOUT.winsize
+    socket.send 'winch',{width:width,height:height}.to_json
   }
   winsize.call
-  Signal.trap("SIGWINCH"){winsize.call}
+  Signal.trap("SIGWINCH"){Thread.new{winsize.call}}
   Signal.trap("SIGCHLD"){stop "broadcast end"}
   Thread.new{
     loop do
