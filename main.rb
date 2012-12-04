@@ -32,7 +32,7 @@ def start
 end
 def stop msg
   height,width=STDOUT.winsize
-  print "\e[?1l\e[>\e[#{height};1H"
+  print "\e[?1l\e[>\e[1;#{height}r\e[#{height};1H"
   system "stty "+@sttyoption
   print msg+"\n"
   exit
@@ -55,12 +55,12 @@ conf_scan=[
     errmsg:'unknown color.'
   },
   {key:"title",msg:"Title",value:"no title"},
-  {
-    key:"private",msg:"Would you like to make it private? [NO/yes]",
-    value:'no',
-    option:['no','yes'],
-    errmsg:'please answer yes or no'
-  }
+#  {
+#    key:"private",msg:"Would you like to make it private? [NO/yes]",
+#    value:'no',
+#    option:['no','yes'],
+#    errmsg:'please answer yes or no'
+#  },
 ]
 
 conf_file=ARGV[0]||"screenxtv.yml"
@@ -88,7 +88,7 @@ conf_scan.each do |item|
 end
 conf['url'].gsub! /[^a-z^A-Z^0-9^_^#]/,""
 conf['color'].downcase!
-conf['private'].downcase!
+#conf['private'].downcase!
 File.write conf_file,conf.to_yaml
 
 print "connecting...\n"
@@ -99,7 +99,7 @@ initdata={
   width:width,height:height,slug:conf['url'],
   info:{color:conf['color'],title:conf['title']}
 }
-if(conf['private']=='yes')then initdata[:info][:private]='yes' end
+#if(conf['private']=='yes')then initdata[:info][:private]='yes' end
 socket.send('init',initdata.to_json)
 url=nil
 loop do
