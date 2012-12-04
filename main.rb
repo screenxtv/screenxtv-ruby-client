@@ -135,7 +135,7 @@ begin
   system "stty raw"
   master,slave=PTY.open
   ENV['TERM']='vt100'
-  ENV['LANG']='ja_JP.UTF-8'
+  ENV['LANG']='en_US.UTF-8'
   master.winsize=STDOUT.winsize
   rr,ww,pid = PTY::getpty("screen -x hoge -R",in:slave,out:master)
   winsize=->{
