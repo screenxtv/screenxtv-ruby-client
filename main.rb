@@ -4,6 +4,7 @@ require 'io/console'
 require 'socket'
 require 'json'
 require 'yaml'
+
 def kvconnect(host,port)
   socket=TCPSocket.open host, port
   @@mutex=Mutex.new
@@ -39,14 +40,31 @@ end
 
 
 conf_scan=[
-  {key:"url",msg:"Create a new URL. If given \"foo\", your URL will be \"http://screenx.tv/foo\".",value:""},
+  {
+    key:"url",
+    msg:"Create a new URL. If given \"foo\", your URL will be \"http://screenx.tv/foo\".",
+    value:"",
+    match:/^[a-zA-Z0-9_]*$/,
+    errmsg:'You can use only alphabets, numbers and underscore.'
+  },
   {key:"screen",value:"screenxtv"},
-  {key:"color",msg:"Terminal Color [BLACK/white/green/novel]",value:"black"},
+  {
+    key:"color",msg:"Terminal Color [BLACK/white/green/novel]",
+    value:'black',
+    option:['black','white','green','novel'],
+    errmsg:'unknown color.'
+  },
   {key:"title",msg:"Title",value:"no title"},
-#  {key:"private",msg:"Would you like to make it private? [NO/yes]",value:"no"}
+  {
+    key:"private",msg:"Would you like to make it private? [NO/yes]",
+    value:'no',
+    option:['no','yes'],
+    errmsg:'please answer yes or no'
+  }
 ]
 
-conf_file="screenxtv.yml"
+conf_file=ARGV[0]||"screenxtv.yml"
+
 conf={}
 begin
   conf=YAML.load_file conf_file
@@ -60,7 +78,7 @@ conf_scan.each do |item|
   if !conf[key] then
     if msg then
       print item[:msg]+"\n> "
-      s=STDIN.readline.chop
+      s=STDIN.readline.strip
       if s=="" then s=value end
       conf[key]=s
     else
@@ -81,6 +99,7 @@ initdata={
   width:width,height:height,slug:conf['url'],
   info:{color:conf['color'],title:conf['title']}
 }
+if(conf['private']=='yes')then initdata[:info][:private]='yes' end
 socket.send('init',initdata.to_json)
 url=nil
 loop do
@@ -99,7 +118,7 @@ conf['url']=url
 File.write conf_file,conf.to_yaml
 
 print "your url is http://screenx.tv/"+url.split("#")[0]+"\n\n";
-print "Press Enter to start broadcasting "
+print "Press Enter to start broadcasting\n> "
 STDIN.readline
 start
 Thread.new{
