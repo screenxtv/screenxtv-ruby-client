@@ -4,6 +4,7 @@ require 'io/console'
 require 'socket'
 require 'json'
 require 'yaml'
+require 'optparse'
 
 def kvconnect(host,port)
   socket=TCPSocket.open host, port
@@ -55,21 +56,37 @@ conf_scan=[
     errmsg:'unknown color.'
   },
   {key:"title",msg:"Title",value:"no title"},
-#  {
-#    key:"private",msg:"Would you like to make it private? [NO/yes]",
-#    value:'no',
-#    option:['no','yes'],
-#    errmsg:'please answer yes or no'
-#  },
 ]
 
-conf_file=ARGV[0]||"screenxtv.yml"
+argv={}
+parser=OptionParser.new do |op|
+  op.on("-u url"){|v|argv[:url]=v}
+  op.on("-c color"){|v|argv[:color]=v}
+  op.on("-t title"){|v|argv[:title]=v}
+  op.on("-e ['uct' to edit]"){|v|argv[:edit]=v||true}
+  op.on("-f config_file"){|v|argv[:file]=v}
+end
+parser.parse(ARGV)
 
+conf_file=argv[:file] || "#{ENV['HOME']}/.screenxtv.yml"
 conf={}
 begin
   conf=YAML.load_file conf_file
 rescue
 end
+
+if(argv[:edit])
+  if argv[:edit]==true
+    conf={}
+  else
+    conf['title']=nil if argv[:edit].match('t')
+    conf['url']=nil if argv[:edit].match('u')
+    conf['color']=nil if argv[:edit].match('c')
+  end
+end
+conf['title']||=argv[:title]
+conf['url']||=argv[:url]
+conf['color']||=argv[:color]
 
 conf_scan.each do |item|
   key=item[:key]
@@ -88,38 +105,33 @@ conf_scan.each do |item|
 end
 conf['url'].gsub! /[^a-z^A-Z^0-9^_^#]/,""
 conf['color'].downcase!
-#conf['private'].downcase!
 File.write conf_file,conf.to_yaml
 
 print "connecting...\n"
-
-socket=kvconnect "screenx.tv",8000
-height,width=STDOUT.winsize
-initdata={
-  width:width,height:height,slug:conf['url'],
-  info:{color:conf['color'],title:conf['title']}
-}
-#if(conf['private']=='yes')then initdata[:info][:private]='yes' end
-socket.send('init',initdata.to_json)
-url=nil
+socket=nil
 loop do
+  File.write conf_file,conf.to_yaml
+  socket=kvconnect "screenx.tv",8000
+  height,width=STDOUT.winsize
+  initdata={
+    width:width,height:height,slug:conf['url'],
+    info:{color:conf['color'],title:conf['title']}
+  }
+  socket.send('init',initdata.to_json)
   key,value=socket.recv
-  if key=='error'
-    print 'An error occured: '+value
-    exit
-  end
   if key=='slug'
-    url=value
+    conf['url']=value
     break
   end
+  print "Specified url '"+conf['url']+"' is alerady in use. Please set another url\n> "
+  conf['url']=STDIN.readline.strip
 end
 
-conf['url']=url
 File.write conf_file,conf.to_yaml
 
-print "your url is http://screenx.tv/"+url.split("#")[0]+"\n\n";
+print "Your url is http://screenx.tv/"+conf['url'].split("#")[0]+"\n\n";
 print "Press Enter to start broadcasting\n> "
-STDIN.readline
+STDIN.readpartial 65536
 start
 Thread.new{
   begin
@@ -137,7 +149,7 @@ begin
   ENV['TERM']='vt100'
   ENV['LANG']='en_US.UTF-8'
   master.winsize=STDOUT.winsize
-  rr,ww,pid = PTY::getpty("screen -x hoge -R",in:slave,out:master)
+  rr,ww,pid = PTY::getpty("screen -x #{conf['screen']} -R",in:slave,out:master)
   winsize=->{
     height,width=master.winsize=rr.winsize=STDOUT.winsize
     socket.send 'winch',{width:width,height:height}.to_json
@@ -157,5 +169,4 @@ begin
 rescue
 end
 stop "broadcast end"
-
 
