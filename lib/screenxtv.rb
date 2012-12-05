@@ -57,10 +57,10 @@ conf_scan=[
 
 argv={}
 parser=OptionParser.new do |op|
-  op.on("-u url"){|v|argv[:url]=v}
-  op.on("-c color"){|v|argv[:color]=v}
-  op.on("-t title"){|v|argv[:title]=v}
-  op.on("-e ['uct' to edit]"){|v|argv[:edit]=v||true}
+  op.on("-u [url]"){|v|argv[:url]=v||true}
+  op.on("-c [color]"){|v|argv[:color]=v||true}
+  op.on("-t [title]"){|v|argv[:title]=v||true}
+  op.on("-reset"){|v|argv[:new]=true}
   op.on("-f config_file"){|v|argv[:file]=v}
 end
 parser.parse(ARGV)
@@ -72,18 +72,13 @@ begin
 rescue
 end
 
-if(argv[:edit])
-  if argv[:edit]==true
-    conf={}
-  else
-    conf['title']=nil if argv[:edit].match('t')
-    conf['url']=nil if argv[:edit].match('u')
-    conf['color']=nil if argv[:edit].match('c')
-  end
+if argv[:new]
+  conf={}
+else
+  conf['url']=argv[:url]==true ? nil : argv[:url] if argv[:url]
+  conf['title']=argv[:title]==true ? nil : argv[:title] if argv[:title]
+  conf['color']=argv[:color]==true ? nil : argv[:color] if argv[:color]
 end
-conf['title']||=argv[:title]
-conf['url']||=argv[:url]
-conf['color']||=argv[:color]
 
 conf_scan.each do |item|
   key=item[:key]
@@ -111,16 +106,16 @@ loop do
   socket=kvconnect "screenx.tv",8000
   height,width=STDOUT.winsize
   initdata={
-    width:width,height:height,slug:conf['url'],
+    width:width,height:height,slug:conf['url']+'#'+(conf['urlhash']||''),
     info:{color:conf['color'],title:conf['title']}
   }
   socket.send('init',initdata.to_json)
   key,value=socket.recv
   if key=='slug'
-    conf['url']=value
+    conf['url'],conf['urlhash']=value.split("#")
     break
   end
-  print "Specified url '"+conf['url']+"' is alerady in use. Please set another url\n> "
+  print "Specified url '"+conf['url']+"' is alerady in use. Please set another url.\n> "
   conf['url']=STDIN.readline.strip
 end
 
@@ -129,6 +124,7 @@ File.write conf_file,conf.to_yaml
 print "Your url is http://screenx.tv/"+conf['url'].split("#")[0]+"\n\n";
 print "Press Enter to start broadcasting\n> "
 STDIN.readpartial 65536
+
 start
 Thread.new{
   begin
