@@ -19,9 +19,6 @@ def kvconnect(host,port)
       self.write value
     }
   end
-  def socket.lockhoge
-    sleep 1
-  end
   def socket.recv
     [self.readline.chop,JSON.parse("["+self.readline+"]")[0]]
   end
