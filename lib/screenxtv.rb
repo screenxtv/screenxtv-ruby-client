@@ -95,7 +95,7 @@ conf_scan.each do |item|
     end
   end
 end
-conf['url'].gsub! /[^a-z^A-Z^0-9^_^#]/,""
+conf['url'].gsub! /[^a-z^A-Z^0-9]/,""
 conf['color'].downcase!
 File.write conf_file,conf.to_yaml
 
@@ -123,7 +123,7 @@ File.write conf_file,conf.to_yaml
 
 print "Your url is http://screenx.tv/"+conf['url'].split("#")[0]+"\n\n";
 print "Press Enter to start broadcasting\n> "
-STDIN.readpartial 65536
+STDIN.readline
 
 start
 Thread.new{
