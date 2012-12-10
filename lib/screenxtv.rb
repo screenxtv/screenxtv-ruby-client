@@ -5,6 +5,21 @@ require 'socket'
 require 'json'
 require 'yaml'
 require 'optparse'
+require 'readline'
+
+if ENV['SCREENXTV_BROADCASTING']
+  print "cannot broadcast inside broadcasting screen\n"
+  exit
+end
+ENV['SCREENXTV_BROADCASTING']='1'
+
+Signal.trap(:INT){exit;}
+
+def readline
+  s=Readline.readline("> ",true)
+  if !s then exit end
+  s.strip
+end
 
 def kvconnect(host,port)
   socket=TCPSocket.open host, port
@@ -25,9 +40,7 @@ def kvconnect(host,port)
   socket
 end
 
-def start
-  @sttyoption=`stty -g`
-end
+@sttyoption=`stty -g`
 def stop msg
   height,width=STDOUT.winsize
   print "\e[?1l\e[>\e[1;#{height}r\e[#{height};1H"
@@ -86,8 +99,8 @@ conf_scan.each do |item|
   value=item[:value]
   if !conf[key] then
     if msg then
-      print item[:msg]+"\n> "
-      s=STDIN.readline.strip
+      print item[:msg]+"\n"
+      s=readline
       if s=="" then s=value end
       conf[key]=s
     else
@@ -95,7 +108,7 @@ conf_scan.each do |item|
     end
   end
 end
-conf['url'].gsub! /[^a-z^A-Z^0-9]/,""
+conf['url'].gsub! /[^a-zA-Z0-9_]/,""
 conf['color'].downcase!
 File.write conf_file,conf.to_yaml
 
@@ -115,17 +128,16 @@ loop do
     conf['url'],conf['urlhash']=value.split("#")
     break
   end
-  print "Specified url '"+conf['url']+"' is alerady in use. Please set another url.\n> "
-  conf['url']=STDIN.readline.strip
+  print "Specified url '"+conf['url']+"' is alerady in use. Please set another url.\n"
+  conf['url']=readline
 end
 
 File.write conf_file,conf.to_yaml
 
 print "Your url is http://screenx.tv/"+conf['url'].split("#")[0]+"\n\n";
-print "Press Enter to start broadcasting\n> "
-STDIN.readline
+print "Press Enter to start broadcasting\n"
+readline
 
-start
 Thread.new{
   begin
     loop do
@@ -148,8 +160,8 @@ begin
     socket.send 'winch',{width:width,height:height}.to_json
   }
   winsize.call
-  Signal.trap("SIGWINCH"){Thread.new{winsize.call}}
-  Signal.trap("SIGCHLD"){stop "broadcast end"}
+  Signal.trap(:SIGWINCH){Thread.new{winsize.call}}
+  Signal.trap(:SIGCHLD){stop "broadcast end"}
   Thread.new{
     loop do
       master.write STDIN.getc
