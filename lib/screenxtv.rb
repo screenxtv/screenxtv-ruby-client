@@ -6,6 +6,11 @@ require 'json'
 require 'yaml'
 require 'optparse'
 require 'readline'
+require 'tempfile'
+
+
+
+
 
 if ENV['SCREENXTV_BROADCASTING']
   print "cannot broadcast inside broadcasting screen\n"
@@ -43,7 +48,7 @@ end
 @sttyoption=`stty -g`
 def stop msg
   height,width=STDOUT.winsize
-  print "\e[?1l\e[>\e[1;#{height}r\e[#{height};1H"
+  print "\e[?1l\e[>\e[1;#{height}r\e[#{height};1H\e[K"
   system "stty "+@sttyoption
   print msg+"\n"
   exit
@@ -55,7 +60,7 @@ conf_scan=[
     key:"url",
     msg:"Create a new URL. If given \"foo\", your URL will be \"http://screenx.tv/foo\".",
     value:"",
-    match:/^[a-zA-Z0-9]*$/,
+    match:/^[a-zA-Z0-9_]*$/,
     errmsg:'You can use only alphabets, numbers and underscore.'
   },
   {key:"screen",value:"screenxtv"},
@@ -138,6 +143,21 @@ print "Your url is http://screenx.tv/"+conf['url'].split("#")[0]+"\n\n";
 print "Press Enter to start broadcasting\n"
 readline
 
+screenrc=Tempfile.new("screenrc");
+begin
+  screenrc.write "escape ^Qq\n"
+  begin
+    File.open("#{ENV['HOME']}/.screenrc"){|file|
+      screenrc.write "#{file.read}\n"
+    }
+  rescue
+  end
+  screenrc.write "hardstatus alwayslastline 'http://screenx.tv/#{conf['url']}'\n"
+  screenrc.flush
+rescue
+end
+p ENV['SCREENRC']=screenrc.path
+
 Thread.new{
   begin
     loop do
@@ -160,7 +180,17 @@ begin
     socket.send 'winch',{width:width,height:height}.to_json
   }
   winsize.call
-  Signal.trap(:SIGWINCH){Thread.new{winsize.call}}
+  resized=false
+  Thread.new{
+    loop do
+      sleep 0.1
+      if resized
+        resized=false
+        winsize.call
+      end
+    end
+  }
+  Signal.trap(:SIGWINCH){resized=true}
   Signal.trap(:SIGCHLD){stop "broadcast end"}
   Thread.new{
     loop do
