@@ -145,7 +145,6 @@ readline
 
 screenrc=Tempfile.new("screenrc");
 begin
-  screenrc.write "escape ^Qq\n"
   begin
     File.open("#{ENV['HOME']}/.screenrc"){|file|
       screenrc.write "#{file.read}\n"
