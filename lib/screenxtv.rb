@@ -168,7 +168,6 @@ Thread.new{
 }
 
 begin
-  system "stty raw"
   master,slave=PTY.open
   ENV['TERM']='vt100'
   ENV['LANG']='en_US.UTF-8'
@@ -193,7 +192,7 @@ begin
   Signal.trap(:SIGCHLD){stop "broadcast end"}
   Thread.new{
     loop do
-      master.write STDIN.getc
+      master.write STDIN.getch
     end
   }
   while(data=master.readpartial 1024)
