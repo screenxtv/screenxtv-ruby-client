@@ -58,7 +58,7 @@ conf_scan=[
     key:"url",
     msg:"Create a new URL. If given \"foo\", your URL will be \"http://screenx.tv/foo\".",
     value:"",
-    match:/^[a-zA-Z0-9_]*$/,
+    match:/^[_a-zA-Z0-9]*$/,
     errmsg:'You can use only alphabets, numbers and underscore.'
   },
   {key:"screen",value:"screenxtv"},
@@ -111,7 +111,7 @@ conf_scan.each do |item|
     end
   end
 end
-conf['url'].gsub! /[^a-zA-Z0-9_]/,""
+conf['url'].gsub! /[^_a-zA-Z0-9]/,""
 conf['color'].downcase!
 File.write conf_file,conf.to_yaml
 
