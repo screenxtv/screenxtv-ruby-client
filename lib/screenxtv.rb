@@ -45,11 +45,9 @@ def kvconnect(host,port)
   socket
 end
 
-@sttyoption=`stty -g`
 def stop msg
   height,width=STDOUT.winsize
   print "\e[?1l\e[>\e[1;#{height}r\e[#{height};1H\e[K"
-  system "stty "+@sttyoption
   print msg+"\n"
   exit
 end
