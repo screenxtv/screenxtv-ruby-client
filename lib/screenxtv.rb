@@ -48,7 +48,7 @@ end
 def stop msg
   height,width=STDOUT.winsize
   print "\e[?1l\e[>\e[1;#{height}r\e[#{height};1H\e[K"
-  print msg+"\n"
+  print msg+"\r\n"
   exit
 end
 
