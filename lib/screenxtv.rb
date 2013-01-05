@@ -8,7 +8,7 @@ require 'optparse'
 require 'readline'
 require 'tempfile'
 
-
+HOST="screenx.tv"
 
 
 
@@ -20,11 +20,40 @@ ENV['SCREENXTV_BROADCASTING']='1'
 
 Signal.trap(:INT){exit;}
 
-def readline
-  s=Readline.readline("> ",true)
+def readline(prompt="> ")
+  s=Readline.readline(prompt,true)
   if !s then exit end
   s.strip
 end
+def readpswd(prompt='> ')
+  print prompt
+  STDIN.raw{
+    s=""
+    loop do
+      c=STDIN.getc
+      case c
+      when "\x03"
+        print "\r\n"
+        return nil
+      when "\r","\n"
+        print "\r\n"
+        return s
+      when "\x7f"
+        if s.length>0
+          s=s.slice 0,s.length-1
+        else
+          print "\a"
+        end
+      when 'a'..'z','A'..'Z','0'..'9','_'
+        s+=c
+      else
+        print "\a"
+      end
+      print "\r\e[K#{prompt}#{s.gsub /./,'*'}"
+    end
+  }
+end
+
 
 def kvconnect(host,port)
   socket=TCPSocket.open host, port
@@ -52,11 +81,28 @@ def stop msg
   exit
 end
 
+def auth(conf)
+  loop do
+    username=readline "user name> "
+    return false if username.size==0
+    password=readpswd "password> "
+    return false if password.nil? || password.size==0
+
+    socket=kvconnect HOST,8000
+    socket.send('init',{user:username,password:password}.to_json)
+    key,value=socket.recv
+    if key=='auth'
+      conf['user']=username
+      conf['auth_key']=value
+      return true
+    end
+  end
+end
 
 conf_scan=[
   {
     key:"url",
-    msg:"Create a new URL. If given \"foo\", your URL will be \"http://screenx.tv/foo\".",
+    msg:"Create a new URL. If given \"foo\", your URL will be \"http://#{HOST}/foo\".",
     value:"",
     match:/^[_a-zA-Z0-9]*$/,
     errmsg:'You can use only alphabets, numbers and underscore.'
@@ -119,10 +165,12 @@ print "connecting...\n"
 socket=nil
 loop do
   File.write conf_file,conf.to_yaml
-  socket=kvconnect "screenx.tv",8000
+  socket=kvconnect HOST,8000
   height,width=STDOUT.winsize
   initdata={
     width:width,height:height,slug:conf['url']+'#'+(conf['urlhash']||''),
+    user:conf['user'],
+    auth_key:conf['auth_key'],
     info:{color:conf['color'],title:conf['title']}
   }
   socket.send('init',initdata.to_json)
@@ -131,13 +179,22 @@ loop do
     conf['url'],conf['urlhash']=value.split("#")
     break
   end
-  print "Specified url '"+conf['url']+"' is alerady in use. Please set another url.\n"
-  conf['url']=readline
+  socket.close
+  if value.match /reserved|auth_key/
+    print "The url '"+conf['url']+"' is reserved. Please sign in.\n"
+    if !auth(conf)
+      print "Please set another url.\n"
+      conf['url']=readline
+    end
+  else
+    print "Specified url '"+conf['url']+"' is alerady in use. Please set another url.\n"
+    conf['url']=readline
+  end
 end
 
 File.write conf_file,conf.to_yaml
 
-print "Your url is http://screenx.tv/"+conf['url'].split("#")[0]+"\n\n";
+print "Your url is http://#{HOST}/"+conf['url'].split("#")[0]+"\n\n";
 print "Press Enter to start broadcasting\n"
 readline
 
@@ -149,7 +206,7 @@ begin
     }
   rescue
   end
-  screenrc.write "hardstatus alwayslastline 'http://screenx.tv/#{conf['url']}'\n"
+  screenrc.write "hardstatus alwayslastline 'http://#{HOST}/#{conf['url']}'\n"
   screenrc.flush
 rescue
 end
@@ -200,4 +257,3 @@ begin
 rescue
 end
 stop "broadcast end"
-
