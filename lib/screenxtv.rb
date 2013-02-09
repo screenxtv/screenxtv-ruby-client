@@ -14,11 +14,11 @@ def show_info(info)
   broadcasting_url="http://#{HOST}/#{info['url']}"
   private_flag=!!info['private']
   authorized=info['authorized']
-  print "broadcasting url : \e[1m#{broadcasting_url}\e[m\n"
-  print "your chat page   : \e[1m#{broadcasting_url}?chat\e[m\n"
+  print "Broadcasting URL: \e[1m#{broadcasting_url}\e[m\n"
+  print "Chat page       : \e[1m#{broadcasting_url}?chat\e[m\n"
   if info['private']
     print "This is a private casting.\n"
-    print "The only person who knows this URL can watch this screen.\n"
+    print "The only person who knows the URL can watch this screen.\n"
   elsif !info['authorized']
     print "This URL is not reserved and chat messages will be deleted after broadcasting.\n";
     print "If you want to reserve this URL, please create your account.\n"
@@ -120,6 +120,7 @@ conf_scan=[
     errmsg:'You can use only alphabets, numbers and underscore.'
   },
   {key:"screen",value:"screenxtv"},
+  {key:"screen_private",value:"screenxtv_private"},
   {
     key:"color",msg:"Terminal Color [BLACK/white/green/novel]",
     value:'black',
@@ -135,7 +136,6 @@ parser=OptionParser.new do |op|
   op.on("-c [color]"){|v|argv[:color]=v||true}
   op.on("-t [title]"){|v|argv[:title]=v||true}
   op.on("-reset"){|v|argv[:new]=true}
-  op.on("-p"){|v|argv[:private]=true}
   op.on("-private"){|v|argv[:private]=true}
   op.on("-f config_file"){|v|argv[:file]=v}
 end
@@ -259,7 +259,8 @@ begin
   ENV['TERM']='vt100'
   ENV['LANG']='en_US.UTF-8'
   master.winsize=STDOUT.winsize
-  rr,ww,pid = PTY::getpty("screen -x #{conf['screen']} -R",in:slave,out:master)
+  screen_name=argv[:private] ? conf['screen_private'] : conf['screen']
+  rr,ww,pid = PTY::getpty("screen -x #{screen_name} -R",in:slave,out:master)
   winsize=->{
     height,width=master.winsize=rr.winsize=STDOUT.winsize
     socket.send 'winch',{width:width,height:height}.to_json
