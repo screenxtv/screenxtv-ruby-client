@@ -10,13 +10,25 @@ require 'tempfile'
 
 HOST="screenx.tv"
 
-
+def show_info(info)
+  broadcasting_url="http://#{HOST}/#{info['url']}"
+  private_flag=!!info['private']
+  authorized=info['authorized']
+  print "broadcasting url : \e[1m#{broadcasting_url}\e[m\n"
+  print "your chat page   : \e[1m#{broadcasting_url}?chat\e[m\n"
+  if info['private']
+    print "This is a private casting.\n"
+    print "The only person who knows this URL can watch this screen.\n"
+  elsif !info['authorized']
+    print "This URL is not reserved and chat messages will be deleted after broadcasting.\n";
+    print "If you want to reserve this URL, please create your account.\n"
+  end
+end
 
 if ENV['SCREENXTV_BROADCASTING']
-  print "cannot broadcast inside broadcasting screen\n"
+  show_info(JSON.parse ENV['SCREENXTV_BROADCASTING'])
   exit
 end
-ENV['SCREENXTV_BROADCASTING']='1'
 
 Signal.trap(:INT){exit;}
 
@@ -30,7 +42,7 @@ def readpswd(prompt='> ')
   STDIN.raw{
     s=""
     loop do
-      c=STDIN.getc
+      c=STDIN.getch
       case c
       when "\x03"
         print "\r\n"
@@ -123,6 +135,8 @@ parser=OptionParser.new do |op|
   op.on("-c [color]"){|v|argv[:color]=v||true}
   op.on("-t [title]"){|v|argv[:title]=v||true}
   op.on("-reset"){|v|argv[:new]=true}
+  op.on("-p"){|v|argv[:private]=true}
+  op.on("-private"){|v|argv[:private]=true}
   op.on("-f config_file"){|v|argv[:file]=v}
 end
 parser.parse(ARGV)
@@ -142,8 +156,11 @@ else
   conf['color']=argv[:color]==true ? nil : argv[:color] if argv[:color]
 end
 
+conf_scan.delete :url if argv[:private]
+
 conf_scan.each do |item|
   key=item[:key]
+  next if key=='url'&&argv[:private]
   msg=item[:msg]
   value=item[:value]
   if !conf[key] then
@@ -157,26 +174,35 @@ conf_scan.each do |item|
     end
   end
 end
-conf['url'].gsub! /[^_a-zA-Z0-9]/,""
+conf['url'].gsub! /[^_a-zA-Z0-9]/,"" if conf['url']
 conf['color'].downcase!
 File.write conf_file,conf.to_yaml
 
 print "connecting...\n"
 socket=nil
+url=''
 loop do
   File.write conf_file,conf.to_yaml
   socket=kvconnect HOST,8000
   height,width=STDOUT.winsize
   initdata={
-    width:width,height:height,slug:conf['url']+'#'+(conf['urlhash']||''),
+    width:width,height:height,slug:(conf['url']||'')+'#'+(conf['urlhash']||''),
     user:conf['user'],
     auth_key:conf['auth_key'],
+    private:argv[:private],
+    private_url:conf['private_url'],
     info:{color:conf['color'],title:conf['title']}
   }
   socket.send('init',initdata.to_json)
   key,value=socket.recv
-  if key=='slug'
+  case key
+  when 'slug'
     conf['url'],conf['urlhash']=value.split("#")
+    url=conf['url']
+    break
+  when 'private_url'
+    conf['private_url']=value;
+    url='private/'+value.split("#")[0]
     break
   end
   socket.close
@@ -193,9 +219,15 @@ loop do
 end
 
 File.write conf_file,conf.to_yaml
+info={
+  'url'=>url,
+  'authorized'=>conf['urlhash']==url+"/"+conf['auth_key'],
+  'private'=>argv[:private] 
+}
+ENV['SCREENXTV_BROADCASTING']=info.to_json
+show_info(info)
 
-print "Your url is http://#{HOST}/"+conf['url'].split("#")[0]+"\n\n";
-print "Press Enter to start broadcasting\n"
+print "\npress enter to start broadcasting"
 readline
 
 screenrc=Tempfile.new("screenrc");
@@ -206,11 +238,11 @@ begin
     }
   rescue
   end
-  screenrc.write "hardstatus alwayslastline 'http://#{HOST}/#{conf['url']}'\n"
+  screenrc.write "hardstatus alwayslastline 'http://#{HOST}/#{url}'\n"
   screenrc.flush
 rescue
 end
-p ENV['SCREENRC']=screenrc.path
+ENV['SCREENRC']=screenrc.path
 
 Thread.new{
   begin
