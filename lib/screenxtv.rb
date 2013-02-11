@@ -221,7 +221,7 @@ end
 File.write conf_file,conf.to_yaml
 info={
   'url'=>url,
-  'authorized'=>conf['urlhash']==url+"/"+conf['auth_key'],
+  'authorized'=>conf['urlhash']==url+"/"+(conf['auth_key']||''),
   'private'=>argv[:private] 
 }
 ENV['SCREENXTV_BROADCASTING']=info.to_json
