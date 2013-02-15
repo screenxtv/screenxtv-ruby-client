@@ -8,6 +8,27 @@ require 'optparse'
 require 'readline'
 require 'tempfile'
 
+def showVersion
+  print "ScreenX TV Ruby Client 0.0.9\n"
+  exit
+end
+def showHelp
+  print <<EOS
+Usage: 
+  screenxtv [options]
+
+Options:
+  -u, [--url]      # Select a url (e.g. yasulab, tompng)
+  -c, [--color]    # Select a color (options: black/white/green/novel)
+  -t, [--title]    # Select a title (e.g. Joe's Codestream)
+  -r, [--reset]    # Reset your default configuration (e.g. url, color, title)
+  -f CONFIG_FILE   # Path to a preset configuration 
+  -p, [--private]  # Broadcast your terminal privately (anyone who has the link can access)
+  -h, [--help]     # Show this help message and quit
+  -v, [--version]  # Show ScreenX TV Ruby Client version number and quit
+EOS
+  exit
+end
 HOST="screenx.tv"
 
 def show_info(info)
@@ -135,11 +156,21 @@ parser=OptionParser.new do |op|
   op.on("-u [url]"){|v|argv[:url]=v||true}
   op.on("-c [color]"){|v|argv[:color]=v||true}
   op.on("-t [title]"){|v|argv[:title]=v||true}
-  op.on("-reset"){|v|argv[:new]=true}
-  op.on("-private"){|v|argv[:private]=true}
+  op.on("--reset"){|v|argv[:new]=true}
+  op.on("-p"){|v|argv[:private]=true}
+  op.on("--private"){|v|argv[:private]=true}
   op.on("-f config_file"){|v|argv[:file]=v}
+  op.on("-v"){showVersion}
+  op.on("--version"){showVersion}
+  op.on("-h"){showHelp}
+  op.on("--help"){showHelp}
 end
-parser.parse(ARGV)
+begin
+  parser.parse(ARGV)
+rescue
+  showHelp
+  exit
+end
 
 conf_file=argv[:file] || "#{ENV['HOME']}/.screenxtv.yml"
 conf={}
