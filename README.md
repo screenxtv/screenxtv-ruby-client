@@ -2,15 +2,41 @@
 
 This is client software to broadcast your termimanl to [ScreenX TV](http://screenx.tv).
 
+[![Screenshot](https://raw.github.com/tompng/screenxtv-gcc-client/master/images/ss-screenxtv.png)](http://screenx.tv)
+
 ## How to install
 
-If you have RubyGems, just install `screenxtv` by
+If you have RubyGems, just install `screenxtv` by RubyGems:
 
    `gem install screenxtv`
 
-and start broadcasting by
+## How to Start
+
+Now, you can start broadcasting anytime. Just type
 
    `screenxtv`
+   
+Then, fill in the given items to start broadcasting your terminal.
+
+   ![ss-start](https://raw.github.com/tompng/screenxtv-gcc-client/master/images/ss-start.png)
+
+That's all! Open the given URL with your web browser and share it with your friends :)
+
+## How to Stop/Resume
+
+1. To stop broadcasting, type `exit` in the broadcasted screen.
+
+   NOTE: ScreenX TV holds your session for __10 minutes__ after the `exit`. 
+   
+   ![ss-stop](https://raw.github.com/tompng/screenxtv-gcc-client/master/images/ss-stop.png)
+
+2. If you'd like to resume, re-run the command.
+
+   `screenxtv`
+
+   Then, the program automatically detects and attaches the session to resume.
+   
+   ![ss-resume](https://raw.github.com/tompng/screenxtv-gcc-client/master/images/ss-resume.png)
 
 ## Related Works
 
