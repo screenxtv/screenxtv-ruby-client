@@ -140,7 +140,7 @@ conf_scan=[
     match:/^[_a-zA-Z0-9]*$/,
     errmsg:'You can use only alphabets, numbers and underscore.'
   },
-  {key:"screen",value:"screenxtv"},
+  {key:"screen",value:"screenxtv_public"},
   {key:"screen_private",value:"screenxtv_private"},
   {
     key:"color",msg:"Terminal Color [BLACK/white/green/novel]",
@@ -286,37 +286,36 @@ Thread.new{
 }
 
 begin
-  master,slave=PTY.open
-  ENV['TERM']='vt100'
   ENV['LANG']='en_US.UTF-8'
   master.winsize=STDOUT.winsize
   screen_name=argv[:private] ? conf['screen_private'] : conf['screen']
-  rr,ww,pid = PTY::getpty("screen -x #{screen_name} -R",in:slave,out:master)
-  winsize=->{
-    height,width=master.winsize=rr.winsize=STDOUT.winsize
-    socket.send 'winch',{width:width,height:height}.to_json
-  }
-  winsize.call
-  resized=false
-  Thread.new{
-    loop do
-      sleep 0.1
-      if resized
-        resized=false
-        winsize.call
+  PTY::getpty "zsh" do |rr,ww|
+    winsize=->{
+      height,width=ww.winsize=rr.winsize=STDOUT.winsize
+      socket.send 'winch',{width:width,height:height}.to_json
+    }
+    winsize.call
+    resized=false
+    Thread.new{
+      loop do
+        sleep 0.1
+        if resized
+          resized=false
+          winsize.call
+        end
       end
+    }
+    Signal.trap(:SIGWINCH){resized=true}
+    Signal.trap(:SIGCHLD){stop "broadcast end"}
+    Thread.new{
+      loop do
+        ww.write STDIN.getch
+      end
+    }
+    while(data=rr.readpartial 1024)
+      print data
+      socket.send 'data',data
     end
-  }
-  Signal.trap(:SIGWINCH){resized=true}
-  Signal.trap(:SIGCHLD){stop "broadcast end"}
-  Thread.new{
-    loop do
-      master.write STDIN.getch
-    end
-  }
-  while(data=master.readpartial 1024)
-    print data
-    socket.send 'data',data
   end
 rescue
 end
