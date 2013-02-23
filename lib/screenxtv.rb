@@ -269,6 +269,7 @@ begin
     }
   rescue
   end
+  screenrc.write "term xterm-256color\n"
   screenrc.write "hardstatus alwayslastline 'http://#{HOST}/#{url}'\n"
   screenrc.flush
 rescue
@@ -287,7 +288,6 @@ Thread.new{
 
 begin
   ENV['LANG']='en_US.UTF-8'
-  master.winsize=STDOUT.winsize
   screen_name=argv[:private] ? conf['screen_private'] : conf['screen']
   PTY::getpty "zsh" do |rr,ww|
     winsize=->{
@@ -312,9 +312,32 @@ begin
         ww.write STDIN.getch
       end
     }
-    while(data=rr.readpartial 1024)
-      print data
-      socket.send 'data',data
+    data=''
+    while(data+=rr.readpartial 1024)
+      ncount=code=0
+      [4,data.length].min.times do
+        c=data[data.length-ncount-1]
+        code=c.ord
+        ncount+=1
+        break if code&0x80==0 or code&0x40!=0
+      end
+      if code&0x80==0 or code&0x40==0
+        ncount=0
+      elsif code&0x20==0
+        ncount=0 if ncount==2
+      elsif code&0x10==0
+        ncount=0 if ncount==3
+      elsif code&0x08==0
+        ncount=0 if ncount==4
+      elsif code&0x04==0
+        ncount=0 if ncount==5
+      elsif code&0x02==0
+        ncount=0 if ncount==6
+      end
+      odata=data[0,data.size-ncount]
+      print odata
+      socket.send 'data',odata
+      data=data[data.size-ncount,ncount]
     end
   end
 rescue
