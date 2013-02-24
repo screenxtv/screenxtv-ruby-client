@@ -253,7 +253,7 @@ File.write conf_file,conf.to_yaml
 info={
   'url'=>url,
   'authorized'=>conf['urlhash']==url+"/"+(conf['auth_key']||''),
-  'private'=>argv[:private] 
+  'private'=>argv[:private]
 }
 ENV['SCREENXTV_BROADCASTING']=info.to_json
 show_info(info)
@@ -289,7 +289,7 @@ Thread.new{
 begin
   ENV['LANG']='en_US.UTF-8'
   screen_name=argv[:private] ? conf['screen_private'] : conf['screen']
-  PTY::getpty "zsh" do |rr,ww|
+  PTY::getpty "screen -x #{screen_name} -R" do |rr,ww|
     winsize=->{
       height,width=ww.winsize=rr.winsize=STDOUT.winsize
       socket.send 'winch',{width:width,height:height}.to_json
