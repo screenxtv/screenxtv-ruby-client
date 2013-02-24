@@ -1,0 +1,28 @@
+<meta encoding=utf-8>
+<script src='http://screenx.tv/assets/screen.js'></script>
+<script>
+var data=[];
+onload=function(){
+  var termdiv=document.getElementById('term')
+  term=new Terminal(termdiv,info.w,info.h);
+  var index=0;
+  var time=0;
+  function schedule(){
+    if(data[index])setTimeout(show,1000*(data[index].time-time))
+  }
+  function show(){
+    d=data[index++];
+    if(d.data){
+      for(var i=0;i<d.data.length;i++)term.write(d.data[i]);
+      term.updateView();
+    }else if(d.winch){
+      term.resize(d.winch.w,d.winch.h);
+      term.updateView();
+    }
+    time=d.time;
+    schedule();
+  }
+  schedule();
+}
+</script>
+<div id='term' style='border:1px solid black'></div>

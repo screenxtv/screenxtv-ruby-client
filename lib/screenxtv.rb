@@ -14,7 +14,7 @@ def showVersion
 end
 def showHelp
   print <<EOS
-Usage: 
+Usage:
   screenxtv [options]
 
 Options:
@@ -22,7 +22,7 @@ Options:
   -c, [--color]    # Select a color (options: black/white/green/novel)
   -t, [--title]    # Select a title (e.g. Joe's Codestream)
   -r, [--reset]    # Reset your default configuration (e.g. url, color, title)
-  -f CONFIG_FILE   # Path to a preset configuration 
+  -f CONFIG_FILE   # Path to a preset configuration
   -p, [--private]  # Broadcast your terminal privately (anyone who has the link can access)
   -h, [--help]     # Show this help message and quit
   -v, [--version]  # Show ScreenX TV Ruby Client version number and quit
@@ -287,12 +287,17 @@ Thread.new{
 }
 
 begin
+  require './record'
+  h,w=STDIN.winsize
+  @rec=Recorder.new "#{ENV['HOME']}/screenxtv_rec#{Time.now.strftime '%m%d%H%M'}.html",w:w,h:h
+
   ENV['LANG']='en_US.UTF-8'
   screen_name=argv[:private] ? conf['screen_private'] : conf['screen']
   PTY::getpty "screen -x #{screen_name} -R" do |rr,ww|
     winsize=->{
       height,width=ww.winsize=rr.winsize=STDOUT.winsize
       socket.send 'winch',{width:width,height:height}.to_json
+      @rec.write winch:{w:width,h:height}
     }
     winsize.call
     resized=false
@@ -337,6 +342,7 @@ begin
       odata=data[0,data.size-ncount]
       print odata
       socket.send 'data',odata
+      @rec.write data:odata.force_encoding('utf-8')
       data=data[data.size-ncount,ncount]
     end
   end
