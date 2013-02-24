@@ -8,6 +8,21 @@ require 'optparse'
 require 'readline'
 require 'tempfile'
 
+# Cross-platform way of finding an executable in the $PATH.
+#
+#   which('ruby') #=> /usr/bin/ruby
+# credit: http://stackoverflow.com/a/5471032
+def which(cmd)
+  exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
+  ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
+    exts.each { |ext|
+      exe = File.join(path, "#{cmd}#{ext}")
+      return exe if File.executable? exe
+    }
+  end
+  return nil
+end
+
 def showVersion
   print "ScreenX TV Ruby Client 0.0.9\n"
   exit
@@ -48,6 +63,11 @@ end
 
 if ENV['SCREENXTV_BROADCASTING']
   show_info(JSON.parse ENV['SCREENXTV_BROADCASTING'])
+  exit
+end
+
+if which("zsh").nil?
+  print "zsh is required to run screenxtv\n"
   exit
 end
 

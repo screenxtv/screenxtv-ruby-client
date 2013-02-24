@@ -38,6 +38,12 @@ That's all! Open the given URL with your web browser and share it with your frie
    
    ![ss-resume](https://raw.github.com/tompng/screenxtv-gcc-client/master/images/ss-resume.png)
 
+## Zsh vs Bash
+
+`screenxtv` internally calls the shell zsh. If you prefer to run bash or another
+shell, simply execute `bash` once `screenxtv` has loaded.
+
+
 ## Related Works
 
 - [ScreenX TV](http://screenx.tv/)
