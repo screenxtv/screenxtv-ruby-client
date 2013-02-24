@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'screenxtv'
-  s.version     = '0.0.9'
-  s.date        = '2013-02-15'
+  s.version     = '0.0.10'
+  s.date        = '2013-02-24'
   s.summary     = 'ScreenX TV client'
   s.description = 'Software for broadcasting your terminal to http://screenx.tv/'
   s.author      = 'Tomoya Ishida'
