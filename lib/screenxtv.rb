@@ -90,20 +90,25 @@ end
 
 def kvconnect(host,port)
   socket=TCPSocket.open host, port
-  @@mutex=Mutex.new
-  def socket.send(key,value)
-    @@mutex.synchronize{
-      keylen=key.bytesize
-      vallen=value.bytesize
-      self.write keylen.chr
-      self.write key
-      self.write (vallen>>8).chr+(vallen&0xff).chr
-      self.write value
-    }
+  class << socket
+    def init_mutex
+      @mutex=Mutex.new
+    end
+    def send(key,value)
+      @mutex.synchronize{
+        keylen=key.bytesize
+        vallen=value.bytesize
+        self.write keylen.chr
+        self.write key
+        self.write (vallen>>8).chr+(vallen&0xff).chr
+        self.write value
+      }
+    end
+    def recv
+      [self.readline.chop,JSON.parse("["+self.readline+"]")[0]]
+    end
   end
-  def socket.recv
-    [self.readline.chop,JSON.parse("["+self.readline+"]")[0]]
-  end
+  socket.init_mutex
   socket
 end
 
