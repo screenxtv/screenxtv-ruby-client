@@ -9,12 +9,12 @@ require 'readline'
 require 'tempfile'
 
 def showVersion
-  print "ScreenX TV Ruby Client 0.0.9\n"
+  print "ScreenX TV Ruby Client 0.0.11\n" #is there any good way to do this?
   exit
 end
 def showHelp
   print <<EOS
-Usage: 
+Usage:
   screenxtv [options]
 
 Options:
@@ -22,7 +22,7 @@ Options:
   -c, [--color]    # Select a color (options: black/white/green/novel)
   -t, [--title]    # Select a title (e.g. Joe's Codestream)
   -r, [--reset]    # Reset your default configuration (e.g. url, color, title)
-  -f CONFIG_FILE   # Path to a preset configuration 
+  -f CONFIG_FILE   # Path to a preset configuration
   -p, [--private]  # Broadcast your terminal privately (anyone who has the link can access)
   -h, [--help]     # Show this help message and quit
   -v, [--version]  # Show ScreenX TV Ruby Client version number and quit
