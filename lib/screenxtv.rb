@@ -8,6 +8,11 @@ require 'optparse'
 require 'readline'
 require 'tempfile'
 
+if `which screen`.empty?
+  print %(Error: you don't have gnu screen in your machine.)
+  exit
+end
+
 def showVersion
   print "ScreenX TV Ruby Client 0.0.11\n" #is there any good way to do this?
   exit
@@ -82,7 +87,7 @@ def readpswd(prompt='> ')
       else
         print "\a"
       end
-      print "\r\e[K#{prompt}#{s.gsub /./,'*'}"
+      print "\r\e[K#{prompt}#{s.gsub /./,'*'}" # delete this
     end
   }
 end
@@ -121,7 +126,7 @@ end
 
 def auth(conf)
   loop do
-    username=readline "user name> "
+    username=readline "username> "
     return false if username.size==0
     password=readpswd "password> "
     return false if password.nil? || password.size==0
