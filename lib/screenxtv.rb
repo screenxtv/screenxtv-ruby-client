@@ -28,6 +28,7 @@ Options:
   -t, [--title]    # Select a title (e.g. Joe's Codestream)
   -r, [--reset]    # Reset your default configuration (e.g. url, color, title)
   -f CONFIG_FILE   # Path to a preset configuration
+  -e, [--execute]  # Execute specified Program
   -p, [--private]  # Broadcast your terminal privately (anyone who has the link can access)
   -h, [--help]     # Show this help message and quit
   -v, [--version]  # Show ScreenX TV Ruby Client version number and quit
@@ -167,6 +168,8 @@ parser=OptionParser.new do |op|
   op.on("-c [color]"){|v|argv[:color]=v||true}
   op.on("-t [title]"){|v|argv[:title]=v||true}
   op.on("--reset"){|v|argv[:new]=true}
+  op.on("-e program"){|v|argv[:execute]=v}
+  op.on("--execute program"){|v|argv[:execute]=v}
   op.on("-p"){|v|argv[:private]=true}
   op.on("--private"){|v|argv[:private]=true}
   op.on("-f config_file"){|v|argv[:file]=v}
@@ -195,6 +198,7 @@ else
   conf['url']=argv[:url]==true ? nil : argv[:url] if argv[:url]
   conf['title']=argv[:title]==true ? nil : argv[:title] if argv[:title]
   conf['color']=argv[:color]==true ? nil : argv[:color] if argv[:color]
+  conf['execute']=argv[:execute]==true ? nil : argv[:execute] if argv[:execute]
 end
 
 conf_scan.delete :url if argv[:private]
@@ -299,7 +303,7 @@ Thread.new{
 begin
   ENV['LANG']='en_US.UTF-8'
   screen_name=argv[:private] ? conf['screen_private'] : conf['screen']
-  PTY::getpty "screen -x #{screen_name} -R" do |rr,ww|
+  PTY::getpty (conf['execute'].nil?) ? "screen -x #{screen_name} -R" : conf['execute'] do |rr,ww|
     winsize=->{
       height,width=ww.winsize=rr.winsize=STDOUT.winsize
       socket.send 'winch',{width:width,height:height}.to_json
