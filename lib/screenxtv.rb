@@ -163,13 +163,14 @@ conf_scan=[
 ]
 
 argv={}
+exec_cmd=nil
 parser=OptionParser.new do |op|
   op.on("-u [url]"){|v|argv[:url]=v||true}
   op.on("-c [color]"){|v|argv[:color]=v||true}
   op.on("-t [title]"){|v|argv[:title]=v||true}
   op.on("--reset"){|v|argv[:new]=true}
-  op.on("-e program"){|v|argv[:execute]=v}
-  op.on("--execute program"){|v|argv[:execute]=v}
+  op.on("-e program"){|v|exec_cmd=v}
+  op.on("--execute program"){|v|exec_cmd=v}
   op.on("-p"){|v|argv[:private]=true}
   op.on("--private"){|v|argv[:private]=true}
   op.on("-f config_file"){|v|argv[:file]=v}
@@ -271,24 +272,44 @@ info={
 }
 ENV['SCREENXTV_BROADCASTING']=info.to_json
 show_info(info)
+message="http://#{HOST}/#{info['url']}"
 
 print "\npress enter to start broadcasting"
 readline
 
-screenrc=Tempfile.new("screenrc");
-begin
+unless exec_cmd
+  unless File.exists? "#{ENV['HOME']}/.screenrc"
+    begin
+      #disable C-a if not screen user
+      Tempfile.open("screenrc_sxtv_alt_conf") do |f|
+        f.write "term xterm-256color\n"
+        f.write "escape ^Jj\n"
+        ENV['SCREENRC']=f.path
+      end
+    rescue
+    end
+  end
+
   begin
-    File.open("#{ENV['HOME']}/.screenrc"){|file|
-      screenrc.write "#{file.read}\n"
-    }
+    #screenxtv -> screen(target)
+    #screenxtv -> screen(hardstatus) -> screen(target)
+    status_rc=Tempfile.open("screenrc_sxtv_status") do |f|
+      f.write "term xterm-256color\n"
+      f.write "hardstatus alwayslastline #{message}\n"
+      f.write "escape ^Qq\n"
+      f.write "autodetach off\n"
+      next f
+    end
   rescue
   end
-  screenrc.write "term xterm-256color\n"
-  screenrc.write "hardstatus alwayslastline 'http://#{HOST}/#{url}'\n"
-  screenrc.flush
-rescue
+
+  screen_name=argv[:private] ? conf['screen_private'] : conf['screen']
+
+  cmd_stat=["screen","-c",status_rc.path,"-S","sxtv_#{url}"]
+  cmd_attach=["screen","-x",screen_name,"-R"]
+  exec_cmd=cmd_stat+cmd_attach
 end
-ENV['SCREENRC']=screenrc.path
+
 
 Thread.new{
   begin
@@ -302,8 +323,8 @@ Thread.new{
 
 begin
   ENV['LANG']='en_US.UTF-8'
-  screen_name=argv[:private] ? conf['screen_private'] : conf['screen']
-  PTY::getpty (conf['execute'].nil?) ? "screen -x #{screen_name} -R" : conf['execute'] do |rr,ww|
+  
+  PTY::getpty *exec_cmd do |rr,ww|
     winsize=->{
       height,width=ww.winsize=rr.winsize=STDOUT.winsize
       socket.send 'winch',{width:width,height:height}.to_json
