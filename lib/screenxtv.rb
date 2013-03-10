@@ -272,7 +272,7 @@ info={
 }
 ENV['SCREENXTV_BROADCASTING']=info.to_json
 show_info(info)
-message="http://#{HOST}/#{info['url']}"
+message="http://#{HOST}/#{info['url']}    #{conf['title']}"
 
 print "\npress enter to start broadcasting"
 readline
@@ -295,7 +295,7 @@ unless exec_cmd
     #screenxtv -> screen(hardstatus) -> screen(target)
     status_rc=Tempfile.open("screenrc_sxtv_status") do |f|
       f.write "term xterm-256color\n"
-      f.write "hardstatus alwayslastline #{message}\n"
+      f.write "hardstatus alwayslastline #{message.inspect}\n"
       f.write "escape ^Qq\n"
       f.write "autodetach off\n"
       next f
@@ -305,10 +305,11 @@ unless exec_cmd
 
   screen_name=argv[:private] ? conf['screen_private'] : conf['screen']
 
-  cmd_stat=["screen","-c",status_rc.path,"-S","sxtv_#{url}"]
+  cmd_stat=["screen","-c",status_rc.path,"-S","sx.#{url.gsub('/','.')}.tv"]
   cmd_attach=["screen","-x",screen_name,"-R"]
   exec_cmd=cmd_stat+cmd_attach
 end
+
 
 
 Thread.new{
