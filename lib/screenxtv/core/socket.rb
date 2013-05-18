@@ -12,12 +12,10 @@ module ScreenXTV
       @mutex.synchronize do
         keylen=key.bytesize
         vallen=value.bytesize
-        @socket.instance_eval do
-          write keylen.chr
-          write key
-          write (vallen>>8).chr+(vallen&0xff).chr
-          write value
-        end
+        @socket.write keylen.chr
+        @socket.write key
+        @socket.write (vallen>>8).chr+(vallen&0xff).chr
+        @socket.write value
       end
     end
 

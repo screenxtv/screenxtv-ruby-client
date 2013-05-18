@@ -1,5 +1,4 @@
-require 'pty'
-require 'io/console'
+require 'tempfile'
 
 module ScreenXTV
   module CommandLine

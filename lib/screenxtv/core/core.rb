@@ -1,9 +1,10 @@
 require 'json'
-require './lib/screenxtv/net/socket'
+require './screenxtv/core/socket'
+require './screenxtv/core/channel'
 
 module ScreenXTV
 
-  class NetworkConfig
+  class ScreenXTVConfig
     attr_accessor :host, :port
     def initialize host, port
       self.host = host
@@ -11,7 +12,7 @@ module ScreenXTV
     end
   end
 
-  CONFIG = NetworkConfig.new 'screenx.tv', 8000
+  CONFIG = ScreenXTVConfig.new 'screenx.tv', 8000
 
   def self.configure
     yield CONFIG

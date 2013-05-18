@@ -1,5 +1,4 @@
-require 'json'
-require './lib/screenxtv/net/socket'
+require './screenxtv/core/socket'
 
 module ScreenXTV
 
@@ -20,7 +19,7 @@ module ScreenXTV
       unless key == 'slug' || key == 'private_url'
         @socket.close
         @socket = nil
-        throw value 
+        throw value
       end
 
       @key_updated_callback.call key, value

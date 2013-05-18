@@ -9,8 +9,10 @@ module ScreenXTV
           height, width = ww.winsize = rr.winsize = STDOUT.winsize
           channel.winch width, height
         }
-        winsize.call
         resized = false
+        Signal.trap(:SIGWINCH){resized = true}
+        Signal.trap(:SIGCHLD){}
+        winsize.call
         Thread.new do
           loop do
             sleep 0.1
@@ -20,8 +22,6 @@ module ScreenXTV
             end
           end
         end
-        Signal.trap(:SIGWINCH){resized = true}
-        Signal.trap(:SIGCHLD){}
         Thread.new{loop{ww.write STDIN.getch}}
         begin
           prevdata = ''
@@ -49,11 +49,8 @@ module ScreenXTV
         code <<= 1
         blen += 1
       end
-      if blen <= ncount
-        ncount = 0
-      else
-        ncount += 1
-      end
+      ncount += 1
+      ncount = 0 if blen < ncount
       [data[0, data.size - ncount], data[data.size - ncount, ncount]]
     end
 
