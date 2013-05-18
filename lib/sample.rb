@@ -6,10 +6,9 @@ require 'yaml'
 require 'optparse'
 require 'readline'
 require 'tempfile'
-require './lib/screenxtv/net/config'
-require './lib/screenxtv/net/channel'
-require './lib/screenxtv/commandline/exec'
-require './lib/screenxtv/commandline/exec_screen'
+require './screenxtv/core/core'
+require './screenxtv/commandline/exec'
+require './screenxtv/commandline/exec_screen'
 
 ScreenXTV.configure do |config|
   config.host = 'localhost'
@@ -17,19 +16,24 @@ ScreenXTV.configure do |config|
 end
 
 channel = ScreenXTV::Channel.new
-channel.key_updated do |key, value|
-  p ['key', key, value]
+channel.config_updated do |config|
+  p ['key', config.to_json]
 end
 
 channel.event do |key, value|
   p ['event', key, value]
 end
 
+config = ScreenXTV::Config.new
+config.public_url = 'suiseiseki'
+config.resume_key = 'foobar'
+
+
 exec_cmd = "bash"
-channel.start slug:'6Da1#vTG578cB58WfNUhB', width: 40, height: 20 do |channel|
+channel.start config do |channel, config|
   #100.times{|i|channel.data "#{i}\r\n";sleep 0.05}
   #ScreenXTV::CommandLine.execute_command channel, exec_cmd
   #ScreenXTV::CommandLine.execute_command_via_screen channel, command:exec_cmd, message:'aaa'
-  ScreenXTV::CommandLine.execute_screen channel, command: exec_cmd, message: 'aaa', screen_name: 'hoge'
+  ScreenXTV::CommandLine.execute_screen channel, command: exec_cmd, message: config.public_url, screen_name: 'hoge'
 end
 

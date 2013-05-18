@@ -1,6 +1,7 @@
 require 'json'
 require './screenxtv/core/socket'
 require './screenxtv/core/channel'
+require './screenxtv/core/config'
 
 module ScreenXTV
 
