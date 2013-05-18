@@ -19,6 +19,10 @@ module ScreenXTV
     yield CONFIG
   end
 
+  def self.HOST
+    CONFIG.host
+  end
+
   def self.authenticate user, password
     self.connect do |socket|
       socket.send('init',{user:username,password:password}.to_json)

@@ -15,6 +15,14 @@ module ScreenXTV
       @height = [1, height.to_i].max
     end
 
+    def url
+      if private
+        "private/#{private_url}"
+      else
+        public_url
+      end
+    end
+
     def private= flag
       @private = !!flag
       if flag
