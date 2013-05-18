@@ -1,3 +1,3 @@
 module ScreenXTV
-  VERSION = 'hogehoge'
+  VERSION = '0.0.12'
 end

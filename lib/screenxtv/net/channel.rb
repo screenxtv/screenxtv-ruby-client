@@ -47,7 +47,7 @@ module ScreenXTV
       @socket.send 'data', odata
     end
 
-    def winch w, h
+    def winch width, height
       @socket.send 'winch', {width: width, height: height}.to_json
     end
 

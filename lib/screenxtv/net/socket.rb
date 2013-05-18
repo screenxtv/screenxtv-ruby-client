@@ -22,11 +22,16 @@ module ScreenXTV
     end
 
     def recv
-      [@socket.readline.chop, JSON.parse("["+@socket.readline+"]")[0]]
+      key = @socket.readline.chop
+      data = @socket.readline
+      p key, data
+      [key, JSON.parse("["+data+"]")[0]]
     end
 
     def close
-      @socket.close
+      @mutex.synchronize do
+        @socket.close
+      end
     end
 
   end

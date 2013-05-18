@@ -1,6 +1,7 @@
+require './lib/screenxtv/version'
 Gem::Specification.new do |s|
   s.name        = 'screenxtv'
-  s.version     = '0.0.11'
+  s.version     = ScreenXTV::VERSION
   s.date        = '2013-02-26'
   s.summary     = 'ScreenX TV client'
   s.description = 'Software for broadcasting your terminal to http://screenx.tv/'
