@@ -36,19 +36,25 @@ module ScreenXTV
     end
 
     def self.utf8_split data
-      ncount = code = 0
-      [4,data.length].min.times do
+      ncount = blen = code = 0
+      [5,data.length].min.times do
         code = data[data.length - ncount - 1].ord
+        break if code & 0x80 == 0 || code & 0x40 != 0
         ncount += 1
-        break if code & 0x80 == 0 or code & 0x40 != 0
       end
-      blen = 0
-      while code & 0x40 == 0
+      if code & 0x80 == 0
+        return [data[0, data.size - ncount], data[data.size - ncount, ncount]]
+      end
+      while code & 0x40 != 0
         code <<= 1
         blen += 1
       end
-      ncount = 0 if blen <= ncount
-      [data[0,data.size-ncount], data[data.size-ncount,ncount]]
+      if blen <= ncount
+        ncount = 0
+      else
+        ncount += 1
+      end
+      [data[0, data.size - ncount], data[data.size - ncount, ncount]]
     end
 
     def self.required_fields options, *requireds
