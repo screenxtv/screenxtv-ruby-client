@@ -7,14 +7,21 @@ require 'yaml'
 require 'optparse'
 require 'readline'
 require 'tempfile'
+require './lib/version.rb'
 
 if `which screen`.empty?
-  print %(Error: you don't have gnu screen in your machine.)
-  exit
+  print %(Warning: you don't have gnu screen in your machine.)
+  commands = [
+    ['zsh','RPROMPT'=>'(screenxtv)% '],
+    ['bash','PS1'=>'bash(screenxtv)$ '],
+    ['sh','PS1'=>'sh(screenxtv)$ ']
+  ]
+  exec_cmd, env = commands.find{|cmd, _| !`which #{cmd}`.empty?}
+  env.each{|k,v|ENV[k]=v}
 end
 
 def showVersion
-  print "ScreenX TV Ruby Client 0.0.11\n" #is there any good way to do this?
+  print "ScreenX TV Ruby Client #{ScreenXTV::VERSION}\n" #is there any good way to do this?
   exit
 end
 def showHelp
@@ -163,7 +170,6 @@ conf_scan=[
 ]
 
 argv={}
-exec_cmd=nil
 parser=OptionParser.new do |op|
   op.on("-u [url]"){|v|argv[:url]=v||true}
   op.on("-c [color]"){|v|argv[:color]=v||true}
