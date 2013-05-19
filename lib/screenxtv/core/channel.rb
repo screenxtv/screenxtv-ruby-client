@@ -1,4 +1,5 @@
 require './screenxtv/core/socket'
+require './screenxtv/core/exception'
 
 module ScreenXTV
 
@@ -12,32 +13,36 @@ module ScreenXTV
       @event_callback = block
     end
 
-    def start config, &block
-      @socket = ScreenXTV.connect
-      @socket.send 'init', config.to_json
-      key, value = @socket.recv
-      if key == 'slug' || key == 'private_url'
-        url, resume_key = value.split "#"
-        changed = false
-        if config.private
-          if config.private_url != url
-            config.private_url = url
-            changed = true
-          end
+    def start config, users={}, &block
+      if config.username
+        user = users[config.username]
+        config.auth_key = user.auth_key if user
+      end
+      begin
+        @socket = start_init config
+      rescue URLReservedException => e
+        user = users[e.username]
+        if user && config.username != e.username
+          config.username = user.name
+          config.auth_key = user.auth_key
+          retry
         else
-          if config.public_url != url
-            config.public_url = url
-            changed = true
+          config.username = nil
+          raise e
+        end
+      rescue URLInUseException => e
+        if config.anonymous
+          config.username = nil
+          config.auth_key = nil
+          if config.private?
+            config.private_url = nil
+          else
+            config.public_url = nil
           end
+          retry
+        else
+          raise e
         end
-        if config.resume_key != resume_key
-          config.resume_key = resume_key
-          changed = true
-        end
-        @config_updated_callback.call config if changed && @config_updated_callback
-      else
-        @socket.close
-        throw value
       end
 
       current = Thread.current
@@ -66,6 +71,43 @@ module ScreenXTV
       @socket.send 'winch', {width: width, height: height}.to_json
     end
 
-  end
+    private
+    def start_init config
+      socket = ScreenXTV.connect
+      socket.send 'init', config.to_json
+      key, value = socket.recv
+      if key == 'slug' || key == 'private_url'
+        url, resume_key = value.split "#"
+        changed = false
+        if config.private?
+          if config.private_url != url
+            config.private_url = url
+            changed = true
+          end
+        else
+          if config.public_url != url
+            config.public_url = url
+            changed = true
+          end
+        end
+        if config.resume_key != resume_key
+          config.resume_key = resume_key
+          changed = true
+        end
+        @config_updated_callback.call config if changed && @config_updated_callback
+        socket
+      else
+        socket.close
+        url = config.private? ? config.private_url : config.public_url
+        if /reserved.*:(?<username>.+)/ =~ value
+          raise URLReservedException username, url
+        elsif value.match /in.*use/
+          raise URLInUseException url
+        else
+          raise Exception, value
+        end
+      end
+    end
 
+  end
 end

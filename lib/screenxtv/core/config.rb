@@ -1,7 +1,7 @@
 module ScreenXTV
   class Config
-    attr_accessor :private, :public_url, :private_url, :resume_key,
-                  :width, :height, :title, :color, :user, :auth_key
+    attr_accessor :private, :public_url, :private_url, :resume_key, :anonymous,
+                  :width, :height, :title, :color, :username, :auth_key
     def initialize
       @width = 80
       @height = 24
@@ -16,11 +16,19 @@ module ScreenXTV
     end
 
     def url
-      if private
-        "private/#{private_url}"
+      if private?
+        "private/#{private_url}" if private_url
       else
         public_url
       end
+    end
+
+    def public?
+      !private
+    end
+
+    def private?
+      !!private
     end
 
     def private= flag
@@ -56,11 +64,11 @@ module ScreenXTV
         color: color
       }
       if user && auth_key
-        hash[:user] = user,
+        hash[:user] = username,
         hash[:auth_key] = auth_key
       end
 
-      if private
+      if private?
         hash[:private] = true
         hash[:private_url] = "#{private_url}##{resume_key}"
       else
