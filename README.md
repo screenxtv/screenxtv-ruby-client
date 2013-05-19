@@ -1,8 +1,8 @@
 # ScreenX TV Ruby Client
 
-This is client software to broadcast your termimanl to [ScreenX TV](http://screenx.tv).
+This is client software to broadcast your termimanl to [ScreenX TV](http://screenx.tv/).
 
-[![Screenshot](https://raw.github.com/tompng/screenxtv-gcc-client/master/images/ss-screenxtv.png)](http://screenx.tv)
+[![Screenshot](https://raw.github.com/screenxtv/screenxtv-gcc-client/master/images/ss-screenxtv.png)](http://screenx.tv)
 
 ## How to install
 
@@ -18,7 +18,7 @@ Now, you can start broadcasting anytime. Just type
    
 Then, fill in the given items to start broadcasting your terminal.
 
-   ![ss-start](https://raw.github.com/tompng/screenxtv-gcc-client/master/images/ss-start.png)
+   ![ss-start](https://raw.github.com/screenxtv/screenxtv-gcc-client/master/images/ss-start.png)
 
 That's all! Open the given URL with your web browser and share it with your friends :)
 
@@ -28,7 +28,7 @@ That's all! Open the given URL with your web browser and share it with your frie
 
    NOTE: ScreenX TV holds your session for __10 minutes__ after the `exit`. 
    
-   ![ss-stop](https://raw.github.com/tompng/screenxtv-gcc-client/master/images/ss-stop.png)
+   ![ss-stop](https://raw.github.com/screenxtv/screenxtv-gcc-client/master/images/ss-stop.png)
 
 2. If you'd like to resume, re-run the command.
 
@@ -36,15 +36,16 @@ That's all! Open the given URL with your web browser and share it with your frie
 
    Then, the program automatically detects and attaches the session to resume.
    
-   ![ss-resume](https://raw.github.com/tompng/screenxtv-gcc-client/master/images/ss-resume.png)
+   ![ss-resume](https://raw.github.com/screenxtv/screenxtv-gcc-client/master/images/ss-resume.png)
 
 ## Related Works
 
 - [ScreenX TV](http://screenx.tv/)
-- [ScreenX TV Sandbox](https://github.com/yasulab/screenxtv-sandbox)
-- [ScreenX TV GCC Client](https://github.com/tompng/screenxtv-gcc-client)
-- [ScreenX TV News](https://github.com/yasulab/screenxtv-news)
-- [ScreenX](https://github.com/tompng/screenx) (internal software)
+- [ScreenX TV GCC Client](https://github.com/screenxtv/screenxtv-gcc-client)
+- [ScreenX TV Ruby Client](https://github.com/screenxtv/screenxtv-ruby-client)
+- [ScreenX TV Sandbox](https://github.com/screenxtv/screenxtv-sandbox)
+- [ScreenX TV News](https://github.com/screenxtv/screenxtv-news)
+- [ScreenX](https://github.com/screenxtv/screenx) (Java-based stand-alone Software)
 
 ## License
 
