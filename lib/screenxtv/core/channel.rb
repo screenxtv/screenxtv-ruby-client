@@ -5,44 +5,30 @@ module ScreenXTV
 
   class Channel
 
-    def config_updated &block
-      @config_updated_callback = block
-    end
-
     def event &block
       @event_callback = block
     end
 
-    def start config, users={}, &block
+    def start config, users = [], &block
       if config.username
-        user = users[config.username]
-        config.auth_key = user.auth_key if user
+        user = users.find{|u| u[:username] == config.username}
+        config.auth_key = user[:auth_key] if user
       end
       begin
         @socket = start_init config
       rescue URLReservedException => e
-        user = users[e.username]
-        if user && config.username != e.username
-          config.username = user.name
-          config.auth_key = user.auth_key
-          retry
-        else
-          config.username = nil
-          raise e
-        end
+        config.username = e.username
+        user = users.find{|u| [:username] == e.username}
+        raise e if user.nil?
+        config.auth_key = user[:auth_key]
+        retry
       rescue URLInUseException => e
-        if config.anonymous
-          config.username = nil
-          config.auth_key = nil
-          if config.private?
-            config.private_url = nil
-          else
-            config.public_url = nil
-          end
-          retry
-        else
-          raise e
-        end
+        raise e unless config.anonymous
+        config.username = nil
+        config.auth_key = nil
+        config.private_url = nil
+        config.public_url = nil
+        retry
       end
 
       current = Thread.current
@@ -78,23 +64,16 @@ module ScreenXTV
       key, value = socket.recv
       if key == 'slug' || key == 'private_url'
         url, resume_key = value.split "#"
-        changed = false
+        config.resume_key = resume_key
         if config.private?
-          if config.private_url != url
-            config.private_url = url
-            changed = true
-          end
+          config.private_url = url
         else
-          if config.public_url != url
-            config.public_url = url
-            changed = true
-          end
+          config.public_url = url
         end
-        if config.resume_key != resume_key
-          config.resume_key = resume_key
-          changed = true
+        unless resume_key.include? config.public_url
+          config.username = nil
+          config.auth_key = nil
         end
-        @config_updated_callback.call config if changed && @config_updated_callback
         socket
       else
         socket.close

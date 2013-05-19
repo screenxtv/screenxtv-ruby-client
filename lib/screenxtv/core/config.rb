@@ -1,7 +1,7 @@
 module ScreenXTV
   class Config
     attr_accessor :private, :public_url, :private_url, :resume_key, :anonymous,
-                  :width, :height, :title, :color, :username, :auth_key
+                  :width, :height, :title, :color, :username, :auth_key, :session_name
     def initialize
       @width = 80
       @height = 24
