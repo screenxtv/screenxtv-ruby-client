@@ -7,7 +7,7 @@ require 'yaml'
 require 'optparse'
 require 'readline'
 require 'tempfile'
-require './lib/version.rb'
+require 'screenxtv/version'
 
 if `which screen`.empty?
   print %(Warning: you don't have gnu screen in your machine.)
