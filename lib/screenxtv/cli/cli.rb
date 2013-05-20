@@ -3,7 +3,7 @@ module ScreenXTV
     OPTIONS = [
       [:private,'private broadcasting'],
       [:url,'specify url'],
-      [:,'specify url'],
+      [:edit,'specify url'],
       [:help,'show help'],
     ]
 
@@ -23,7 +23,7 @@ module ScreenXTV
       ops.each do |key, *values|
         op = OPTIONS.find{|op| op.to_s.include? key}
         raise Exception, "invalid option '#{key}'" if op.nil?
-        options[op] = values.empty? true : values
+        options[op] = values.empty? ? true : values
       end
     end
 

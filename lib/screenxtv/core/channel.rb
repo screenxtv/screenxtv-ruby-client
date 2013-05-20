@@ -1,5 +1,5 @@
-require './screenxtv/core/socket'
-require './screenxtv/core/exception'
+require 'screenxtv/core/socket'
+require 'screenxtv/core/exception'
 
 module ScreenXTV
 
@@ -70,7 +70,7 @@ module ScreenXTV
         else
           config.public_url = url
         end
-        unless resume_key.include? config.public_url
+        unless config.public_url && resume_key.include?(config.public_url)
           config.username = nil
           config.auth_key = nil
         end

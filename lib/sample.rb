@@ -1,6 +1,8 @@
-require './screenxtv/core/core'
-require './screenxtv/commandline/exec'
-require './screenxtv/commandline/exec_screen'
+$LOAD_PATH.unshift(File.dirname(__FILE__))
+
+require 'screenxtv/core/core'
+require 'screenxtv/commandline/exec'
+require 'screenxtv/commandline/exec_screen'
 
 ScreenXTV.configure do |config|
   config.host = 'localhost'

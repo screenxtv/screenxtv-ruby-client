@@ -63,7 +63,7 @@ module ScreenXTV
         title: title,
         color: color
       }
-      if user && auth_key
+      if username && auth_key
         hash[:user] = username,
         hash[:auth_key] = auth_key
       end
