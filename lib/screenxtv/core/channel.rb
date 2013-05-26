@@ -35,7 +35,8 @@ module ScreenXTV
       Thread.new do
         begin
           loop do
-            @event_callback.call *@socket.recv if @event_callback
+            event = @socket.recv
+            @event_callback.call *event if @event_callback
           end
         rescue
         end
