@@ -82,9 +82,9 @@ module ScreenXTV
         socket.close
         url = config.private? ? config.private_url : config.public_url
         if /reserved.*:(?<username>.+)/ =~ value
-          raise URLReservedException username, url
+          raise URLReservedException.new url, username
         elsif value.match /in.*use/
-          raise URLInUseException url
+          raise URLInUseException.new url
         else
           raise Exception, value
         end
