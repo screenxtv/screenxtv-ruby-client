@@ -25,7 +25,7 @@ module ScreenXTV
 
   def self.authenticate user, password
     self.connect do |socket|
-      socket.send('init',{user:username,password:password}.to_json)
+      socket.send('init',{user:user,password:password}.to_json)
       type, auth_key = socket.recv
       if type == 'auth'
         auth_key

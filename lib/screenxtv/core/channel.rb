@@ -14,16 +14,18 @@ module ScreenXTV
         user = users.find{|u| u[:username] == config.username}
         config.auth_key = user[:auth_key] if user
       end
+      retry_count = 0
       begin
+        retry_count += 1
         @socket = start_init config
       rescue URLReservedException => e
         config.username = e.username
         user = users.find{|u| [:username] == e.username}
-        raise e if user.nil?
+        raise e if user.nil? || retry_count >= 2
         config.auth_key = user[:auth_key]
         retry
       rescue URLInUseException => e
-        raise e unless config.anonymous
+        raise e unless config.anonymous || retry_count >= 2
         config.username = nil
         config.auth_key = nil
         config.private_url = nil

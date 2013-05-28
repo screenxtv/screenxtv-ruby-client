@@ -1,5 +1,5 @@
 module ScreenXTV
-  class URLReservedException
+  class URLReservedException < Exception
     attr_accessor :url, :username
     def initialize username, url
       self.url = url
@@ -7,7 +7,7 @@ module ScreenXTV
     end
   end
 
-  class URLInUseException
+  class URLInUseException < Exception
     attr_accessor :url
     def initialize url
       self.url = url
