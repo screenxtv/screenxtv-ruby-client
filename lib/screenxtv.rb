@@ -330,10 +330,10 @@ Thread.new{
 
 begin
   ENV['LANG']='en_US.UTF-8'
-  
+
   PTY::getpty *exec_cmd do |rr,ww|
     winsize=->{
-      height,width=ww.winsize=rr.winsize=STDOUT.winsize
+      height,width=ww.winsize=rr.winsize=[*STDOUT.winsize.take(2),nil,nil]
       socket.send 'winch',{width:width,height:height}.to_json
     }
     winsize.call
